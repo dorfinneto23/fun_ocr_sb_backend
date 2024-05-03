@@ -21,7 +21,49 @@ username = os.environ.get('sql_username')
 password = os.environ.get('sql_password')
 driver= '{ODBC Driver 18 for SQL Server}'
 
+# Generic Function to update case  in the 'cases' table
+def update_case_generic(caseid,field,value):
+    try:
+        # Establish a connection to the Azure SQL database
+        conn = pyodbc.connect('DRIVER='+driver+';SERVER='+server+';DATABASE='+database+';UID='+username+';PWD='+ password)
+        cursor = conn.cursor()
 
+        # Insert new case data into the 'cases' table
+        cursor.execute(f"UPDATE cases SET {field} = ? WHERE id = ?", (value, caseid))
+        conn.commit()
+
+        # Close connections
+        cursor.close()
+        conn.close()
+        
+        logging.info(f"case {caseid} updated field name: {field} , value: {value}")
+        return True
+    except Exception as e:
+        logging.error(f"Error update case: {str(e)}")
+        return False    
+    
+    #Create event on azure service bus 
+def create_servicebus_event(queue_name, event_data):
+    try:
+        # Create a ServiceBusClient using the connection string
+        servicebus_client = ServiceBusClient.from_connection_string(connection_string_servicebus)
+
+        # Create a sender for the queue
+        sender = servicebus_client.get_queue_sender(queue_name)
+
+        with sender:
+            # Create a ServiceBusMessage object with the event data
+            message = ServiceBusMessage(event_data)
+
+            # Send the message to the queue
+            sender.send_messages(message)
+
+        print("Event created successfully.")
+    
+    except Exception as e:
+        print("An error occurred:", str(e))
+
+        
 app = func.FunctionApp()
 
 @app.service_bus_queue_trigger(arg_name="azservicebus", queue_name="ocr",

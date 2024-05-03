@@ -7,6 +7,8 @@ import io # in order to download pdf to memory and write into memory without dis
 import json # in order to use json 
 import pyodbc #for sql connections 
 from azure.servicebus import ServiceBusClient, ServiceBusMessage # in order to use azure service bus 
+from azure.ai.documentintelligence import DocumentIntelligenceClient
+from azure.ai.documentintelligence.models import ContentFormat, AnalyzeDocumentRequest
 
 # Azure Blob Storage connection string
 connection_string_blob = os.environ.get('BlobStorageConnString')
@@ -63,7 +65,7 @@ def create_servicebus_event(queue_name, event_data):
     except Exception as e:
         print("An error occurred:", str(e))
 
-        
+
 app = func.FunctionApp()
 
 @app.service_bus_queue_trigger(arg_name="azservicebus", queue_name="ocr",

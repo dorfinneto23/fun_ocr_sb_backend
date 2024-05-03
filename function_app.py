@@ -73,3 +73,10 @@ app = func.FunctionApp()
 def sb_ocr_process(azservicebus: func.ServiceBusMessage):
     message_data = azservicebus.get_body().decode('utf-8')
     logging.info('Received messageesds: %s', message_data)
+    message_data_dict = json.loads(message_data)
+    caseid = message_data_dict['caseid']
+    filename = message_data_dict['filename']
+    path = message_data_dict['path']
+    url = message_data_dict['url']
+    doc_id = message_data_dict['doc_id']
+

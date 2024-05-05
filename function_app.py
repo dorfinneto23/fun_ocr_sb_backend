@@ -9,12 +9,18 @@ import pyodbc #for sql connections
 from azure.servicebus import ServiceBusClient, ServiceBusMessage # in order to use azure service bus 
 from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.ai.documentintelligence.models import ContentFormat, AnalyzeDocumentRequest
+from azure.core.credentials import AzureKeyCredential
 
 # Azure Blob Storage connection string
 connection_string_blob = os.environ.get('BlobStorageConnString')
 
 #Azure service bus connection string 
 connection_string_servicebus = os.environ.get('servicebusConnectionString')
+
+#ocument intelligence Details 
+document_intelligence_endpoint = os.environ.get('document_intelligence_endpoint')
+document_intelligence_key = os.environ.get('document_intelligence_key')
+
 
 # Define connection details
 server = 'medicalanalysis-sqlserver.database.windows.net'
@@ -65,6 +71,38 @@ def create_servicebus_event(queue_name, event_data):
     except Exception as e:
         print("An error occurred:", str(e))
 
+def analyze_document_and_save_markdown(blob_sas_url,caseid,filename):
+    
+    try:
+        logging.info(f"sanalyze_document_and_save_markdown: Start")
+        container_name = "medicalanalysis"
+        main_folder_name = "cases"
+        folder_name="case-"+caseid
+        filename = filename.replace('.pdf', '.txt')
+        blob_service_client = BlobServiceClient.from_connection_string(connection_string_blob)
+        container_client = blob_service_client.get_container_client(container_name)
+        basicPath = f"{main_folder_name}/{folder_name}"
+        destinationPath = f"{basicPath}/ocr/{filename}"
+        logging.info(f"sanalyze_document_and_save_markdown Destination Path: {destinationPath}")
+
+        document_intelligence_client = DocumentIntelligenceClient(
+            endpoint=document_intelligence_endpoint, 
+            credential=AzureKeyCredential(document_intelligence_key)
+        )
+        poller = document_intelligence_client.begin_analyze_document(
+            "prebuilt-layout",
+            AnalyzeDocumentRequest(url_source=blob_sas_url),  # Correct usage
+            output_content_format=ContentFormat.MARKDOWN,
+        )
+        result = poller.result()
+        logging.info(f"sanalyze_document_and_save_markdown result: {result}")
+        pdfContent = result.content
+        logging.info(f"sanalyze_document_and_save_markdown pdfContent: {pdfContent}")
+        blob_client = container_client.upload_blob(name=destinationPath, data=pdfContent.read())
+        logging.info(f"sanalyze_document_and_save_markdown pdfContent: {blob_client.url}")
+        return f"true {blob_client.url}"
+    except Exception as e:
+        return str(e)
 
 app = func.FunctionApp()
 
@@ -79,4 +117,5 @@ def sb_ocr_process(azservicebus: func.ServiceBusMessage):
     path = message_data_dict['path']
     url = message_data_dict['url']
     doc_id = message_data_dict['doc_id']
+    analyze_document_and_save_markdown(url,caseid,filename)
 

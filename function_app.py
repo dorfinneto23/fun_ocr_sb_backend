@@ -116,7 +116,7 @@ def sb_ocr_process(azservicebus: func.ServiceBusMessage):
     filename = message_data_dict['filename']
     path = message_data_dict['path']
     url = message_data_dict['url']
-    doc_id = message_data_dict['doc_id']
+    doc_id = message_data_dict['docid']
     logging.info(f"Before analyze_document_and_save_markdown")
     analyze_document_and_save_markdown(url,caseid,filename)
 

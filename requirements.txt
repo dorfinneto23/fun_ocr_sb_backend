@@ -8,4 +8,4 @@ PyPDF2
 pyodbc
 azure.servicebus
 azure.ai.documentintelligence
-azure.core.credentials
+azure.core

@@ -89,8 +89,8 @@ def analyze_document_and_save_markdown(blob_sas_url,caseid,filename):
             endpoint=document_intelligence_endpoint, 
             credential=AzureKeyCredential(document_intelligence_key)
         )
-        logging.info(f"document_intelligence_client defined")
-        
+        logging.info(f"document_intelligence_client -  defined")
+
         poller = document_intelligence_client.begin_analyze_document(
             "prebuilt-layout",
             AnalyzeDocumentRequest(url_source=blob_sas_url),  # Correct usage

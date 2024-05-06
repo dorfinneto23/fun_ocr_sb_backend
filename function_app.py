@@ -106,7 +106,8 @@ def analyze_document_and_save_markdown(blob_sas_url,caseid,filename):
         data = { 
             "status" : "sucess", 
             "blob url" :blob_client.url,
-            "filename" :filename
+            "filename" :filename,
+            "Description" : f"OCR Process file:{filename} sucess"
         } 
         json_data = json.dumps(data)
         logging.info(f"analyze_document_and_save_markdown sucess response : {json_data}")

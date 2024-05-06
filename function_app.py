@@ -21,7 +21,7 @@ connection_string_servicebus = os.environ.get('servicebusConnectionString')
 document_intelligence_endpoint = os.environ.get('document_intelligence_endpoint')
 document_intelligence_key = os.environ.get('document_intelligence_key')
 
-
+tempurl = "https://fcc.report/FCC-ID/BCGA2843/6156832.pdf"
 # Define connection details
 server = 'medicalanalysis-sqlserver.database.windows.net'
 database = 'medicalanalysis'
@@ -93,7 +93,7 @@ def analyze_document_and_save_markdown(blob_sas_url,caseid,filename):
 
         poller = document_intelligence_client.begin_analyze_document(
             "prebuilt-layout",
-            AnalyzeDocumentRequest(url_source=blob_sas_url),  # Correct usage
+            AnalyzeDocumentRequest(url_source=tempurl),  # Correct usage
             output_content_format=ContentFormat.MARKDOWN,
         )
         result = poller.result()
@@ -115,8 +115,7 @@ def analyze_document_and_save_markdown(blob_sas_url,caseid,filename):
         #preparing data for response 
             data = { 
                 "status" : "error", 
-                "Description" :str(e),
-                "poller" :poller
+                "Description" :str(e)
             } 
             json_data = json.dumps(data)
             logging.info(f"sanalyze_document_and_save_markdown json response : {json_data}")

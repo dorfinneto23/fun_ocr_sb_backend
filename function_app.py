@@ -102,9 +102,25 @@ def analyze_document_and_save_markdown(blob_sas_url,caseid,filename):
         logging.info(f"sanalyze_document_and_save_markdown pdfContent: {pdfContent}")
         blob_client = container_client.upload_blob(name=destinationPath, data=pdfContent.read())
         logging.info(f"sanalyze_document_and_save_markdown pdfContent: {blob_client.url}")
-        return f"true {blob_client.url}"
+        #preparing data for response 
+        data = { 
+            "status" : "sucess", 
+            "blob url" :blob_client.url,
+            "result" :result
+        } 
+        json_data = json.dumps(data)
+        logging.info(f"sanalyze_document_and_save_markdown json response : {json_data}")
+        return json_data
     except Exception as e:
-        return str(e)
+        #preparing data for response 
+            data = { 
+                "status" : "error", 
+                "Description" :str(e),
+                "poller" :poller
+            } 
+            json_data = json.dumps(data)
+            logging.info(f"sanalyze_document_and_save_markdown json response : {json_data}")
+            return json_data
 
 app = func.FunctionApp()
 

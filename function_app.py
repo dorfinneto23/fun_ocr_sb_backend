@@ -101,12 +101,12 @@ def analyze_document_and_save_markdown(blob_sas_url,caseid,filename):
         logging.info(f"sanalyze_document_and_save_markdown pdfContent: {pdfContent}")
         #data=pdfContent.read()
         blob_client = container_client.upload_blob(name=destinationPath, data=pdfContent)
-        logging.info(f"sanalyze_document_and_save_markdown pdfContent: {blob_client.url}")
+        logging.info(f"sanalyze_document_and_save_markdown ocr url: {blob_client.url}")
         #preparing data for response 
         data = { 
             "status" : "sucess", 
             "blob url" :blob_client.url,
-            "result" :result
+            "filename" :filename
         } 
         json_data = json.dumps(data)
         logging.info(f"sanalyze_document_and_save_markdown json response : {json_data}")
@@ -135,5 +135,13 @@ def sb_ocr_process(azservicebus: func.ServiceBusMessage):
     url = message_data_dict['url']
     doc_id = message_data_dict['docid']
     logging.info(f"Before analyze_document_and_save_markdown")
-    analyze_document_and_save_markdown(url,caseid,filename)
+    ocr_result = analyze_document_and_save_markdown(url,caseid,filename)
+    ocr_result_dic = json.loads(ocr_result)
+    if ocr_result_dic["status"] == "success":
+        logging.info(f"ocr completed")
+    else:
+        errorMesg = ocr_result_dic["Description"]
+        logging.info(f"error:{errorMesg}")
+
+    
 

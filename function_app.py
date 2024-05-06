@@ -21,7 +21,7 @@ connection_string_servicebus = os.environ.get('servicebusConnectionString')
 document_intelligence_endpoint = os.environ.get('document_intelligence_endpoint')
 document_intelligence_key = os.environ.get('document_intelligence_key')
 
-tempurl = "https://icseindia.org/document/sample.pdf"
+tempurl = "https://www.btl.gov.il/About/Documents/FileSizeReductionGuide.pdf"
 # Define connection details
 server = 'medicalanalysis-sqlserver.database.windows.net'
 database = 'medicalanalysis'

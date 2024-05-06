@@ -104,7 +104,7 @@ def analyze_document_and_save_markdown(blob_sas_url,caseid,filename):
         logging.info(f"sanalyze_document_and_save_markdown ocr url: {blob_client.url}")
         #preparing data for response 
         data = { 
-            "status" : "sucess", 
+            "status" : "success", 
             "blob url" :blob_client.url,
             "filename" :filename,
             "Description" : f"OCR Process file:{filename} sucess"

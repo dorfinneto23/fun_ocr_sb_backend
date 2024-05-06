@@ -71,7 +71,7 @@ def create_servicebus_event(queue_name, event_data):
     except Exception as e:
         print("An error occurred:", str(e))
 
-def analyze_document_and_save_markdown(blob_sas_url,caseid,filename):
+def analyze_document_and_save_markdown(fileUrl,caseid,filename):
     
     try:
         logging.info(f"sanalyze_document_and_save_markdown: Start")
@@ -93,7 +93,7 @@ def analyze_document_and_save_markdown(blob_sas_url,caseid,filename):
 
         poller = document_intelligence_client.begin_analyze_document(
             "prebuilt-layout",
-            AnalyzeDocumentRequest(url_source=tempurl),  # Correct usage
+            AnalyzeDocumentRequest(url_source=fileUrl),  # Correct usage
             output_content_format=ContentFormat.MARKDOWN,
         )
         result = poller.result()

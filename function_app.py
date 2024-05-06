@@ -93,7 +93,7 @@ def analyze_document_and_save_markdown(fileUrl,caseid,filename):
 
         poller = document_intelligence_client.begin_analyze_document(
             "prebuilt-layout",
-            AnalyzeDocumentRequest(url_source=tempurl),  # Correct usage
+            AnalyzeDocumentRequest(url_source=fileUrl),  # Correct usage
             output_content_format=ContentFormat.MARKDOWN,
         )
         result = poller.result()

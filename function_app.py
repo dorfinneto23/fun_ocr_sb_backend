@@ -109,7 +109,7 @@ def analyze_document_and_save_markdown(blob_sas_url,caseid,filename):
             "filename" :filename
         } 
         json_data = json.dumps(data)
-        logging.info(f"sanalyze_document_and_save_markdown json response : {json_data}")
+        logging.info(f"analyze_document_and_save_markdown sucess response : {json_data}")
         return json_data
     except Exception as e:
         #preparing data for response 
@@ -118,7 +118,7 @@ def analyze_document_and_save_markdown(blob_sas_url,caseid,filename):
                 "Description" :str(e)
             } 
             json_data = json.dumps(data)
-            logging.info(f"sanalyze_document_and_save_markdown json response : {json_data}")
+            logging.info(f"analyze_document_and_save_markdown error response : {json_data}")
             return json_data
 
 app = func.FunctionApp()

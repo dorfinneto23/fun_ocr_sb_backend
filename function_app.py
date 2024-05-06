@@ -97,7 +97,6 @@ def analyze_document_and_save_markdown(blob_sas_url,caseid,filename):
             output_content_format=ContentFormat.MARKDOWN,
         )
         result = poller.result()
-        logging.info(f"sanalyze_document_and_save_markdown result: {result}")
         pdfContent = result.content
         logging.info(f"sanalyze_document_and_save_markdown pdfContent: {pdfContent}")
         blob_client = container_client.upload_blob(name=destinationPath, data=pdfContent.read())

@@ -98,7 +98,7 @@ def analyze_document_and_save_markdown(fileUrl,caseid,filename):
         )
         result = poller.result()
         pdfContent = result.content
-        logging.info(f"sanalyze_document_and_save_markdown pdfContent: {pdfContent}")
+        logging.info(f"analyze_document_and_save_markdown pdfContent: {pdfContent}")
         #data=pdfContent.read()
         blob_client = container_client.upload_blob(name=destinationPath, data=pdfContent)
         logging.info(f"sanalyze_document_and_save_markdown ocr url: {blob_client.url}")

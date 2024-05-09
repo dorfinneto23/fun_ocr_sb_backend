@@ -38,14 +38,14 @@ def update_documents_generic(doc_id,field,value):
         cursor = conn.cursor()
 
         # Insert new case data into the 'cases' table
-        cursor.execute(f"UPDATE cases SET {field} = ? WHERE id = ?", (value, doc_id))
+        cursor.execute(f"UPDATE documents SET {field} = ? WHERE id = ?", (value, doc_id))
         conn.commit()
 
         # Close connections
         cursor.close()
         conn.close()
         
-        logging.info(f"case {doc_id} updated field name: {field} , value: {value}")
+        logging.info(f"document id:  {doc_id} updated field name: {field} , value: {value}")
         return True
     except Exception as e:
         logging.error(f"Error update case: {str(e)}")

@@ -21,13 +21,35 @@ connection_string_servicebus = os.environ.get('servicebusConnectionString')
 document_intelligence_endpoint = os.environ.get('document_intelligence_endpoint')
 document_intelligence_key = os.environ.get('document_intelligence_key')
 
-tempurl = "https://www.btl.gov.il/About/Documents/FileSizeReductionGuide.pdf"
 # Define connection details
 server = 'medicalanalysis-sqlserver.database.windows.net'
 database = 'medicalanalysis'
 username = os.environ.get('sql_username')
 password = os.environ.get('sql_password')
 driver= '{ODBC Driver 18 for SQL Server}'
+
+
+# Generic Function to update documents  in the 'documents' table
+
+def update_documents_generic(doc_id,field,value):
+    try:
+        # Establish a connection to the Azure SQL database
+        conn = pyodbc.connect('DRIVER='+driver+';SERVER='+server+';DATABASE='+database+';UID='+username+';PWD='+ password)
+        cursor = conn.cursor()
+
+        # Insert new case data into the 'cases' table
+        cursor.execute(f"UPDATE cases SET {field} = ? WHERE id = ?", (value, doc_id))
+        conn.commit()
+
+        # Close connections
+        cursor.close()
+        conn.close()
+        
+        logging.info(f"case {doc_id} updated field name: {field} , value: {value}")
+        return True
+    except Exception as e:
+        logging.error(f"Error update case: {str(e)}")
+        return False  
 
 # Generic Function to update case  in the 'cases' table
 def update_case_generic(caseid,field,value):
@@ -105,8 +127,9 @@ def analyze_document_and_save_markdown(fileUrl,caseid,filename):
         #preparing data for response 
         data = { 
             "status" : "success", 
-            "blob url" :blob_client.url,
+            "bloburl" :blob_client.url,
             "filename" :filename,
+            "path" :destinationPath,
             "Description" : f"OCR Process file:{filename} sucess"
         } 
         json_data = json.dumps(data)
@@ -132,6 +155,8 @@ def sb_ocr_process(azservicebus: func.ServiceBusMessage):
     message_data_dict = json.loads(message_data)
     caseid = message_data_dict['caseid']
     filename = message_data_dict['filename']
+    filename_without_extension = os.path.splitext(filename)[0]
+    new_filename = filename_without_extension + ".text"
     path = message_data_dict['path']
     url = message_data_dict['url']
     doc_id = message_data_dict['docid']
@@ -140,9 +165,23 @@ def sb_ocr_process(azservicebus: func.ServiceBusMessage):
     ocr_result_dic = json.loads(ocr_result)
     if ocr_result_dic["status"] == "success":
         logging.info(f"ocr completed")
+        #preparing data for service bus 
+        doc_id_int = int(doc_id)
+        data = { 
+                "doc_id" : doc_id_int, 
+                "filename" :new_filename,
+                "path" :ocr_result_dic["path"],
+                "url" :ocr_result_dic["bloburl"],
+                "caseid" :caseid
+            } 
+        json_data = json.dumps(data)
+        create_servicebus_event("contentanalysis", json_data)
+        update_documents_generic(doc_id,"status",2) #update status to 2 "ocr done"
+        
     else:
         errorMesg = ocr_result_dic["Description"]
         logging.info(f"error:{errorMesg}")
+        update_documents_generic(doc_id,"status",3) #update status to 2 "ocr failed"
 
     
 

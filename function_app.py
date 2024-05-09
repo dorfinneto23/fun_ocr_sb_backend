@@ -179,6 +179,7 @@ def sb_ocr_process(azservicebus: func.ServiceBusMessage):
         json_data = json.dumps(data)
         create_servicebus_event("contentanalysis", json_data)
         update_documents_generic(doc_id,"status",2) #update status to 2 "ocr done"
+        logging.info(f"the ocr page number is {pagenumber} out of {totalpages}")
         if pagenumber==totalpages: #check if the last file passed 
             update_case_generic(caseid,"status",5) #update case status to 6 "ocr done"
         

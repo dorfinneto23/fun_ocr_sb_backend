@@ -160,6 +160,8 @@ def sb_ocr_process(azservicebus: func.ServiceBusMessage):
     path = message_data_dict['path']
     url = message_data_dict['url']
     doc_id = message_data_dict['docid']
+    pagenumber = message_data_dict['pagenumber'] #the page number on pdf files 
+    totalpages = message_data_dict['pages_num'] #total pages need to ocr operation 
     logging.info(f"Before analyze_document_and_save_markdown")
     ocr_result = analyze_document_and_save_markdown(url,caseid,filename)
     ocr_result_dic = json.loads(ocr_result)
@@ -177,11 +179,14 @@ def sb_ocr_process(azservicebus: func.ServiceBusMessage):
         json_data = json.dumps(data)
         create_servicebus_event("contentanalysis", json_data)
         update_documents_generic(doc_id,"status",2) #update status to 2 "ocr done"
+        if pagenumber==totalpages: #check if the last file passed 
+            update_case_generic(caseid,"status",5) #update case status to 6 "ocr done"
         
     else:
         errorMesg = ocr_result_dic["Description"]
         logging.info(f"error:{errorMesg}")
-        update_documents_generic(doc_id,"status",3) #update status to 2 "ocr failed"
+        update_documents_generic(doc_id,"status",3) #update document status to 2 "ocr failed"
+        update_case_generic(caseid,"status",6) #update case status to 6 "ocr failed"
 
     
 

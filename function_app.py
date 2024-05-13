@@ -174,7 +174,9 @@ def sb_ocr_process(azservicebus: func.ServiceBusMessage):
                 "filename" :new_filename,
                 "path" :ocr_result_dic["path"],
                 "url" :ocr_result_dic["bloburl"],
-                "caseid" :caseid
+                "caseid" :caseid,
+                "pagenumber" :pagenumber,
+                "totalpages" :totalpages
             } 
         json_data = json.dumps(data)
         create_servicebus_event("contentanalysis", json_data)

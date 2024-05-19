@@ -67,29 +67,6 @@ def update_documents_entity_field(table_name, partition_key, row_key, field_name
     except Exception as e:
         logging.info(f"An error occurred: {e}")
 
-
-# Generic Function to update documents  in the 'documents' table
-
-def update_documents_generic(doc_id,field,value):
-    try:
-        # Establish a connection to the Azure SQL database
-        conn = pyodbc.connect('DRIVER='+driver+';SERVER='+server+';DATABASE='+database+';UID='+username+';PWD='+ password)
-        cursor = conn.cursor()
-
-        # Insert new case data into the 'cases' table
-        cursor.execute(f"UPDATE documents SET {field} = ? WHERE id = ?", (value, doc_id))
-        conn.commit()
-
-        # Close connections
-        cursor.close()
-        conn.close()
-        
-        logging.info(f"document id:  {doc_id} updated field name: {field} , value: {value}")
-        return True
-    except Exception as e:
-        logging.error(f"Error update case: {str(e)}")
-        return False  
-
 # Generic Function to update case  in the 'cases' table
 def update_case_generic(caseid,field,value):
     try:
@@ -218,7 +195,6 @@ def sb_ocr_process(azservicebus: func.ServiceBusMessage):
             } 
         json_data = json.dumps(data)
         create_servicebus_event("contentanalysis", json_data)
-        #update_documents_generic(doc_id,"status",2) #update status to 2 "ocr done"
         update_documents_entity_field("documents",caseid,doc_id,"status",2) #update status to 2 "ocr done"
         logging.info(f"the ocr page number is {pagenumber} out of {totalpages}")
         if pagenumber==totalpages: #check if the last file passed 
@@ -227,7 +203,6 @@ def sb_ocr_process(azservicebus: func.ServiceBusMessage):
     else:
         errorMesg = ocr_result_dic["Description"]
         logging.info(f"error:{errorMesg}")
-        #update_documents_generic(doc_id,"status",3) #update document status to 2 "ocr failed"
         update_documents_entity_field("documents",caseid,doc_id,"status",3) #update document status to 2 "ocr failed"
         update_case_generic(caseid,"status",6) #update case status to 6 "ocr failed"
 

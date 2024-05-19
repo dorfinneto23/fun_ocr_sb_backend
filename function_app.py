@@ -32,7 +32,7 @@ driver= '{ODBC Driver 18 for SQL Server}'
 
 
 # Update field on specific entity/ row in storage table 
-def update_documents_entity_field(table_name, partition_key, row_key, field_name, new_value):
+def update_documents_entity_field(table_name, partition_key, row_key, field_name, new_value,field_name2,new_value2,field_name3,new_value3):
     """
     Updates a specific field of an entity in an Azure Storage Table.
 
@@ -57,6 +57,8 @@ def update_documents_entity_field(table_name, partition_key, row_key, field_name
 
         # Update the field
         entity[field_name] = new_value
+        entity[field_name2] = new_value2
+        entity[field_name3] = new_value3
 
         # Update the entity in the table
         table_client.update_entity(entity, mode=UpdateMode.REPLACE)
@@ -195,11 +197,10 @@ def sb_ocr_process(azservicebus: func.ServiceBusMessage):
             } 
         json_data = json.dumps(data)
         create_servicebus_event("contentanalysis", json_data)
-        update_documents_entity_field("documents",caseid,doc_id,"status",2) #update status to 2 "ocr done"
+        update_documents_entity_field("documents",caseid,doc_id,"status",2,"ocrPath",ocr_result_dic["path"],"ocrUrl",ocr_result_dic["bloburl"]) #update status to 2 "ocr done"
         logging.info(f"the ocr page number is {pagenumber} out of {totalpages}")
         if pagenumber==totalpages: #check if the last file passed 
             update_case_generic(caseid,"status",5) #update case status to 6 "ocr done"
-        
     else:
         errorMesg = ocr_result_dic["Description"]
         logging.info(f"error:{errorMesg}")

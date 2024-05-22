@@ -222,7 +222,7 @@ def sb_ocr_process(azservicebus: func.ServiceBusMessage):
         update_documents_entity_field("documents",caseid,doc_id,"status",2,"ocrPath",ocr_result_dic["path"],"ocrUrl",ocr_result_dic["bloburl"]) #update status to 2 "ocr done"
         logging.info(f"the ocr page number is {pagenumber} out of {totalpages}")
         pages_done = count_rows_in_partition("documents",caseid) # check how many pages proccess done 
-        if pagenumber==pages_done: #check if the last file passed 
+        if totalpages==pages_done: #check if the last file passed 
             update_case_generic(caseid,"status",5) #update case status to 6 "ocr done"
     else:
         errorMesg = ocr_result_dic["Description"]

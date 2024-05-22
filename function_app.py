@@ -31,6 +31,28 @@ password = os.environ.get('sql_password')
 driver= '{ODBC Driver 18 for SQL Server}'
 
 
+
+#  Function check how many rows in partition of azure storage table
+def count_rows_in_partition( table_name,partition_key):
+    # Create a TableServiceClient object using the connection string
+    service_client = TableServiceClient.from_connection_string(conn_str=connection_string_blob)
+    
+    # Get the table client
+    table_client = service_client.get_table_client(table_name=table_name)
+    
+    # Define the filter query to count entities with the specified partition key and where ocrUrl is not null or empty
+    filter_query = f"PartitionKey eq '{partition_key}' and ocrUrl ne ''"
+    
+    # Query the entities and count the number of entities
+    entities = table_client.query_entities(query_filter=filter_query)
+    count = sum(1 for _ in entities)  # Sum up the entities
+    
+    if count>0:
+        return count
+    else:
+        return 0
+
+
 # Update field on specific entity/ row in storage table 
 def update_documents_entity_field(table_name, partition_key, row_key, field_name, new_value,field_name2,new_value2,field_name3,new_value3):
     """
@@ -199,7 +221,8 @@ def sb_ocr_process(azservicebus: func.ServiceBusMessage):
         create_servicebus_event("contentanalysis", json_data)
         update_documents_entity_field("documents",caseid,doc_id,"status",2,"ocrPath",ocr_result_dic["path"],"ocrUrl",ocr_result_dic["bloburl"]) #update status to 2 "ocr done"
         logging.info(f"the ocr page number is {pagenumber} out of {totalpages}")
-        if pagenumber==totalpages: #check if the last file passed 
+        pages_done = count_rows_in_partition("documents",caseid) # check how many pages proccess done 
+        if pagenumber==pages_done: #check if the last file passed 
             update_case_generic(caseid,"status",5) #update case status to 6 "ocr done"
     else:
         errorMesg = ocr_result_dic["Description"]

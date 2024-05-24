@@ -12,6 +12,8 @@ from azure.ai.documentintelligence.models import ContentFormat, AnalyzeDocumentR
 from azure.core.credentials import AzureKeyCredential
 from azure.data.tables import TableServiceClient, TableClient, UpdateMode # in order to use azure storage table  
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError # in order to use azure storage table  exceptions 
+import tiktoken # in order to calculate tokens 
+
 
 # Azure Blob Storage connection string
 connection_string_blob = os.environ.get('BlobStorageConnString')
@@ -31,6 +33,15 @@ password = os.environ.get('sql_password')
 driver= '{ODBC Driver 18 for SQL Server}'
 
 
+def count_gpt_tokens(string, model_name='gpt-4'):
+    # Initialize the tokenizer for the specified model
+    encoding = tiktoken.encoding_for_model(model_name)
+    
+    # Encode the string into tokens
+    tokens = encoding.encode(string)
+    
+    # Return the number of tokens
+    return len(tokens)
 
 #  Function check how many rows in partition of azure storage table
 def count_rows_in_partition( table_name,partition_key):
@@ -54,7 +65,7 @@ def count_rows_in_partition( table_name,partition_key):
 
 
 # Update field on specific entity/ row in storage table 
-def update_documents_entity_field(table_name, partition_key, row_key, field_name, new_value,field_name2,new_value2,field_name3,new_value3):
+def update_documents_entity_field(table_name, partition_key, row_key, field_name, new_value,field_name2,new_value2,field_name3,new_value3,field_name4,new_value4):
     """
     Updates a specific field of an entity in an Azure Storage Table.
 
@@ -81,6 +92,7 @@ def update_documents_entity_field(table_name, partition_key, row_key, field_name
         entity[field_name] = new_value
         entity[field_name2] = new_value2
         entity[field_name3] = new_value3
+        entity[field_name4] = new_value4
 
         # Update the entity in the table
         table_client.update_entity(entity, mode=UpdateMode.REPLACE)
@@ -163,6 +175,8 @@ def analyze_document_and_save_markdown(fileUrl,caseid,filename):
         logging.info(f"analyze_document_and_save_markdown pdfContent: {pdfContent}")
         #data=pdfContent.read()
         blob_client = container_client.upload_blob(name=destinationPath, data=pdfContent)
+        tokens = count_gpt_tokens(pdfContent)
+        logging.info(f"analyze_document_and_save_markdown tokens of gpt response : {tokens}")
         logging.info(f"sanalyze_document_and_save_markdown ocr url: {blob_client.url}")
         #preparing data for response 
         data = { 
@@ -170,6 +184,7 @@ def analyze_document_and_save_markdown(fileUrl,caseid,filename):
             "bloburl" :blob_client.url,
             "filename" :filename,
             "path" :destinationPath,
+            "tokens" :tokens,
             "Description" : f"OCR Process file:{filename} sucess"
         } 
         json_data = json.dumps(data)
@@ -219,7 +234,7 @@ def sb_ocr_process(azservicebus: func.ServiceBusMessage):
             } 
         json_data = json.dumps(data)
         create_servicebus_event("contentanalysis", json_data)
-        update_documents_entity_field("documents",caseid,doc_id,"status",2,"ocrPath",ocr_result_dic["path"],"ocrUrl",ocr_result_dic["bloburl"]) #update status to 2 "ocr done"
+        update_documents_entity_field("documents",caseid,doc_id,"status",2,"ocrPath",ocr_result_dic["path"],"ocrUrl",ocr_result_dic["bloburl"],"ocrResponseTokens",ocr_result_dic["tokens"]) #update status to 2 "ocr done"
         logging.info(f"the ocr page number is {pagenumber} out of {totalpages}")
         pages_done = count_rows_in_partition("documents",caseid) # check how many pages proccess done 
         if totalpages==pages_done: #check if the last file passed 

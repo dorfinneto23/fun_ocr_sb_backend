@@ -5,7 +5,6 @@
 azure-functions
 azure.storage.blob
 PyPDF2
-pyodbc
 azure.servicebus
 azure.ai.documentintelligence
 azure.core

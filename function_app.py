@@ -33,6 +33,34 @@ password = os.environ.get('sql_password')
 driver= '{ODBC Driver 18 for SQL Server}'
 
 
+
+# Update field on specific entity/ row in storage table 
+def update_entity_field(table_name, partition_key, row_key, field_name, new_value,field_name2, new_value2):
+
+    try:
+        # Create a TableServiceClient using the connection string
+        table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string_blob)
+
+        # Get a TableClient
+        table_client = table_service_client.get_table_client(table_name)
+
+        # Retrieve the entity
+        entity = table_client.get_entity(partition_key, row_key)
+
+        # Update the field
+        entity[field_name] = new_value
+        entity[field_name2] = new_value2
+
+        # Update the entity in the table
+        table_client.update_entity(entity, mode=UpdateMode.REPLACE)
+        logging.info(f"update_entity_field:Entity updated successfully.")
+
+    except ResourceNotFoundError:
+        logging.info(f"The entity with PartitionKey '{partition_key}' and RowKey '{row_key}' was not found.")
+    except Exception as e:
+        logging.info(f"An error occurred: {e}")
+
+
 def count_gpt_tokens(string, model_name='gpt-4'):
     # Initialize the tokenizer for the specified model
     encoding = tiktoken.encoding_for_model(model_name)
@@ -240,11 +268,13 @@ def sb_ocr_process(azservicebus: func.ServiceBusMessage):
         pages_done = count_rows_in_partition("documents",caseid) # check how many pages proccess done 
         if totalpages==pages_done: #check if the last file passed 
             update_case_generic(caseid,"status",5,"ocrProcess",1) #update case status to 6 "ocr done" and ocrProcess = 1 done
+            update_entity_field("cases", caseid, "1", "status",5,"ocrProcess",1) #update case status to 6 "ocr done" and ocrProcess = 1 done
     else:
         errorMesg = ocr_result_dic["Description"]
         logging.info(f"error:{errorMesg}")
         update_documents_entity_field("documents",caseid,doc_id,"status",3) #update document status to 2 "ocr failed"
         update_case_generic(caseid,"status",6,"ocrProcess",2) #update case status to 6 "ocr failed" and ocrProcess 2 failed
+        update_entity_field("cases", caseid, "1", "status",6,"ocrProcess",2) #update case status to 6 "ocr failed" and ocrProcess 2 failed
 
     
 

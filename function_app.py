@@ -5,7 +5,6 @@ from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient # 
 from PyPDF2 import PdfReader,PdfWriter  # in order to read and write  pdf file 
 import io # in order to download pdf to memory and write into memory without disk permission needed 
 import json # in order to use json 
-import pyodbc #for sql connections 
 from azure.servicebus import ServiceBusClient, ServiceBusMessage # in order to use azure service bus 
 from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.ai.documentintelligence.models import ContentFormat, AnalyzeDocumentRequest
@@ -24,13 +23,6 @@ connection_string_servicebus = os.environ.get('servicebusConnectionString')
 #ocument intelligence Details 
 document_intelligence_endpoint = os.environ.get('document_intelligence_endpoint')
 document_intelligence_key = os.environ.get('document_intelligence_key')
-
-# Define connection details
-server = 'medicalanalysis-sqlserver.database.windows.net'
-database = 'medicalanalysis'
-username = os.environ.get('sql_username')
-password = os.environ.get('sql_password')
-driver= '{ODBC Driver 18 for SQL Server}'
 
 
 
@@ -131,26 +123,6 @@ def update_documents_entity_field(table_name, partition_key, row_key, field_name
     except Exception as e:
         logging.info(f"An error occurred: {e}")
 
-# Generic Function to update case  in the 'cases' table
-def update_case_generic(caseid,field,value,field2,value2):
-    try:
-        # Establish a connection to the Azure SQL database
-        conn = pyodbc.connect('DRIVER='+driver+';SERVER='+server+';DATABASE='+database+';UID='+username+';PWD='+ password)
-        cursor = conn.cursor()
-
-        # Insert new case data into the 'cases' table
-        cursor.execute(f"UPDATE cases SET {field} = ?, {field2} = ? WHERE id = ?", (value, value2, caseid))
-        conn.commit()
-
-        # Close connections
-        cursor.close()
-        conn.close()
-        
-        logging.info(f"case {caseid} updated field name: {field} , value: {value}")
-        return True
-    except Exception as e:
-        logging.error(f"Error update case: {str(e)}")
-        return False    
     
     #Create event on azure service bus 
 def create_servicebus_event(queue_name, event_data):
@@ -267,13 +239,11 @@ def sb_ocr_process(azservicebus: func.ServiceBusMessage):
         logging.info(f"the ocr page number is {pagenumber} out of {totalpages}")
         pages_done = count_rows_in_partition("documents",caseid) # check how many pages proccess done 
         if totalpages==pages_done: #check if the last file passed 
-            update_case_generic(caseid,"status",5,"ocrProcess",1) #update case status to 6 "ocr done" and ocrProcess = 1 done
             update_entity_field("cases", caseid, "1", "status",5,"ocrProcess",1) #update case status to 6 "ocr done" and ocrProcess = 1 done
     else:
         errorMesg = ocr_result_dic["Description"]
         logging.info(f"error:{errorMesg}")
         update_documents_entity_field("documents",caseid,doc_id,"status",3) #update document status to 2 "ocr failed"
-        update_case_generic(caseid,"status",6,"ocrProcess",2) #update case status to 6 "ocr failed" and ocrProcess 2 failed
         update_entity_field("cases", caseid, "1", "status",6,"ocrProcess",2) #update case status to 6 "ocr failed" and ocrProcess 2 failed
 
     

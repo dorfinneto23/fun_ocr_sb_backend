@@ -148,6 +148,7 @@ def create_servicebus_event(queue_name, event_data):
 def analyze_document_and_save_markdown(fileUrl,caseid,filename):
     
     try:
+        minimum_letters = 10
         logging.info(f"sanalyze_document_and_save_markdown: Start")
         container_name = "medicalanalysis"
         main_folder_name = "cases"
@@ -172,6 +173,9 @@ def analyze_document_and_save_markdown(fileUrl,caseid,filename):
         )
         result = poller.result()
         pdfContent = result.content
+        letters = len(pdfContent)
+        if letters<minimum_letters:
+             pdfContent = "empty page"
         logging.info(f"analyze_document_and_save_markdown pdfContent: {pdfContent}")
         #data=pdfContent.read()
         blob_client = container_client.upload_blob(name=destinationPath, data=pdfContent)
